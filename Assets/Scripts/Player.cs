@@ -7,10 +7,19 @@ public class Player : MonoBehaviour
 {
     [SerializeField]
     private Transform destSampleTr = null;
-    
-    
-    private NavMeshAgent agent = null;
 
+    [Header("--Flag--")]
+    [SerializeField]
+    private Flag entryFlag = null;//시작플레그만알기
+    [SerializeField]
+    private Flag goalFlag = null;
+
+
+    private NavMeshAgent agent = null;
+    private List<Flag> flagList = new List<Flag>(); //전체 목록
+
+
+    //스타트 -> 
 
     private void Awake()
     {
@@ -20,11 +29,25 @@ public class Player : MonoBehaviour
     private void Start()
     {
         //agent.SetDestination(destSampleTr.position);
+
+        //과제
+        flagList = FlagManager.PathFinding(entryFlag, goalFlag);
+
+    }
+
+    private IEnumerator MovingCoroutine() //코루틴 병렬작업
+    { 
+        while (flagList.Count>0) //갈목록이있다면 돌아야함
+        {
+             //yield return new WaitForSeconds(1f); //예시) 1초에한번 체크타이밍
+             yield return null;
+        }   
     }
     private void Update()
     {
         //Debug.Log(agent.remainingDistance);
-        //Debug.Log(Input.mousePosition);     //마우스 포지션확인
+        //Debug.Log(Input.mousePosition);     //마우스 포지션확인 
+        /*//잠시주석
         if(Input.GetMouseButtonDown(0))
         {
             Vector3 pickPos = Vector3.zero;
@@ -37,6 +60,12 @@ public class Player : MonoBehaviour
             //agent.SetDestination(destSampleTr.position);
         }
         //agent.SetDestination(destSampleTr.position);
+        */
+
+
+
+
+
 
     }
 
