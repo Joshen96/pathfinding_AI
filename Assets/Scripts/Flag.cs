@@ -30,5 +30,9 @@ public class Flag : MonoBehaviour
                 break;
         }
     }
+    public Flag[] GetNextFlags()
+    {
+        return nextFlagList.ToArray();
+    }
 
 }

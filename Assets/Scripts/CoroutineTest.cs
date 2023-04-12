@@ -4,14 +4,35 @@ using UnityEngine;
 
 public class CoroutineTest : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    private Coroutine testCo = null;
+
+    private void Start()
     {
-        StartCoroutine(TestCoroutine());  //内风凭 角青内靛
-        StartCoroutine("TestCoroutine2");
+        //testCo = StartCoroutine(TestCoroutine());
+        //StartCoroutine("TestCoroutine2");
+
+        //InvokeRepeating("TestInvoke", 0f, 0f);
     }
 
-   private IEnumerator TestCoroutine()
+
+    private void TestInvoke()
+    {
+        Debug.Log("Test Invoke");
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            //StopCoroutine(TestCoroutine());
+            //StopCoroutine(testCo);
+            //StopCoroutine("TestCoroutine2");
+
+            StopAllCoroutines();
+        }
+    }
+
+    private IEnumerator TestCoroutine()
     {
         while (true)
         {
@@ -22,20 +43,18 @@ public class CoroutineTest : MonoBehaviour
             Debug.Log("3");
             yield return new WaitForSeconds(1f);
         }
-
     }
+
     private IEnumerator TestCoroutine2()
     {
         while (true)
         {
-            Debug.Log("------1");
+            Debug.Log("----- 1");
             yield return new WaitForSeconds(1f);
-            Debug.Log("------2");
+            Debug.Log("----- 2");
             yield return new WaitForSeconds(1f);
-            Debug.Log("------3");
+            Debug.Log("----- 3");
             yield return new WaitForSeconds(1f);
         }
-
     }
-
 }

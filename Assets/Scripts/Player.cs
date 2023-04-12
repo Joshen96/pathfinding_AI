@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField]
-    private Transform destSampleTr = null;
+    //[SerializeField]
+    //private Transform destSampleTr = null;
 
     [Header("--Flag--")]
     [SerializeField]
@@ -16,9 +17,9 @@ public class Player : MonoBehaviour
 
 
     private NavMeshAgent agent = null;
-    private List<Flag> flagList = new List<Flag>(); //전체 목록
 
-
+    private List<Flag> flagList = null;
+    private bool isMoving = false;
     //스타트 -> 
 
     private void Awake()
@@ -33,15 +34,27 @@ public class Player : MonoBehaviour
         //과제
         flagList = FlagManager.PathFinding(entryFlag, goalFlag);
 
+        foreach (Flag flag in flagList)
+        {
+            Debug.Log("[" + flag + "]");
+        }
+        SetNextFlag();
     }
 
-    private IEnumerator MovingCoroutine() //코루틴 병렬작업
-    { 
-        while (flagList.Count>0) //갈목록이있다면 돌아야함
-        {
-             //yield return new WaitForSeconds(1f); //예시) 1초에한번 체크타이밍
-             yield return null;
-        }   
+    private IEnumerator MovingCoroutine(Flag _nextFlag) //코루틴 병렬작업
+    {
+        agent.destination = _nextFlag.transform.position;
+        isMoving = true;
+        yield return null;
+
+
+        while (agent.remainingDistance > 0f)
+            yield return null;
+
+        _nextFlag.SetColor(Flag.EState.Passed);
+        isMoving = false;
+
+        SetNextFlag();
     }
     private void Update()
     {
@@ -67,6 +80,18 @@ public class Player : MonoBehaviour
 
 
 
+    }
+
+    private void SetNextFlag()
+    {
+        if (isMoving) return;
+        if (flagList.Count == 0) return;
+
+        Flag nextFlag = flagList[0];
+        //StartCoroutine(MovingCoroutine(nextFlag));
+        StartCoroutine("MovingCoroutine", nextFlag);
+        flagList.RemoveAt(0);
+        //flagList.Remove(nextFlag);
     }
 
     private bool MousePicking( out Vector3 _pickpos)
