@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -17,8 +18,11 @@ public class Player : MonoBehaviour
 
 
     private NavMeshAgent agent = null;
-
+    
     private List<Flag> flagList = null;
+    [SerializeField]
+    
+   
     private bool isMoving = false;
     //스타트 -> 
 
@@ -34,11 +38,15 @@ public class Player : MonoBehaviour
         //과제
         flagList = FlagManager.PathFinding(entryFlag, goalFlag);
 
+
         foreach (Flag flag in flagList)
         {
             Debug.Log("[" + flag + "]");
         }
         SetNextFlag();
+
+
+        
     }
 
     private IEnumerator MovingCoroutine(Flag _nextFlag) //코루틴 병렬작업
@@ -74,8 +82,17 @@ public class Player : MonoBehaviour
         }
         //agent.SetDestination(destSampleTr.position);
         */
+        /*
+        Debug.Log("시작");
 
-
+        for (int i = 0; i < FlagManager.flagsB.Length; i++)
+        {
+            Debug.Log($"{FlagManager.flagsB[i]}");
+        }
+        Debug.Log("끝");
+        Debug.Log(" ");
+        Debug.Log(" ");
+        */
 
 
 
