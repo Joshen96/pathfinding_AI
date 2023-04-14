@@ -1,147 +1,142 @@
-ï»¿using System.Collections;
+using JetBrains.Annotations;
+using System.Collections;
 using System.Collections.Generic;
+
+using System.Linq;
+using System.Runtime.CompilerServices;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 public class FlagManager
 {
-    // Dijkstra algorithm
-    public static List<Flag> PathFinding(Flag _entryFlag, Flag _goalFlag)
+    static List<Flag> passedProcessedList = new List<Flag>(); //¹éÆ®·¡Å·À» ÀÌ¿ëÇØ¼­ °ñÀÎÁöÁ¡±îÁö °£ ÇÃ·¡±× ¸®½ºÆ®´ã±â¿ë
+    static List<float> passedcostList = new List<float>(); // ¹éÆ®·¡Å·À» ÀÌ¿ëÇØ¼­ °ñÀÎÁöÁ¡À» °¥¶§¸¶´Ù ÇÃ·¡±×¸¶´ÙÀÇ °Å¸®¸¦ ¸®½ºÆ®·Î ´ã±â¿ë
+
+    static List<Flag[]> resultsList = new List<Flag[]>(); // °ñÀÎÁöÁ¡±îÁö °£ °æ·ÎµéÀÇ ¸®½ºÆ® (ÀÏ´Ü °ñÀÎ±îÁö °¡´Â ¸ğµç°æ¿ìÀÇ¼ö)
+    static List<float> resultscostList = new List<float>(); // °ñÀÎÁöÁ¡±îÁö °£ °æ·ÎµéÀÇ ¸®½ºÆ®ÀÇ ÃÑ°Å¸®ÇÕÀ» ´ãÀº ¸®½ºÆ®
+    public static List<Flag> PathFinding(Flag _entryFlag, Flag _goal)
     {
-        Dictionary<Flag, float> distance = new Dictionary<Flag, float>();  //(í‚¤ê°’)í”Œë˜ê·¸ì™€ (ë²¨ë¥˜)ê±°ë¦¬float 
-        Dictionary<Flag, Flag> previous = new Dictionary<Flag, Flag>();    //(í‚¤ê°’)í”Œë˜ê·¸ì™€ (ë²¨ë¥˜)í”Œë˜ê·¸  
-        List<Flag> unvisited = new List<Flag>();                           //í”Œë˜ê·¸ ë¦¬ìŠ¤íŠ¸ ë°©ë¬¸
+        //bool isGoal =false;
+        passedProcessedList.Clear();
+        passedcostList.Clear();
+        resultsList.Clear();
+        resultscostList.Clear();
+        // Debug.Log(passedProcessedList.Count);
+        passedProcessedList.Add(_entryFlag);
+        FlagSearch(_entryFlag, _goal); //Àç±Í
 
-        distance[_entryFlag] = 0;
-        previous[_entryFlag] = null;
-        //ì‹œì‘ ê±°ë¦¬ ë”•ì…”ë ¤ë¦¬
-        //ì‹œì‘ í”Œë˜ê·¸ 
+        //¸ğµç °æ·Î ¹× ºñ¿ë °è»ê¿Ï·á
 
-        foreach (Flag flag in GameObject.FindObjectsOfType<Flag>()) //Flag ë‹¬ë¦° ì˜¤ë¸Œì íŠ¸ ì „ë¶€
+        //¸ğµç°æ·Î ºñ±³ÇÏ¿© ÃÖ¼Ò Ã£±â
+        float distance = float.MaxValue; int shortest = -1;
+        for (int i = 0; i < resultsList.Count; ++i)
         {
-            if (flag != _entryFlag) //ì‹œì‘í”Œë˜ê·¸ ì œì™¸í•˜ê³ 
-            {
-                distance[flag] = Mathf.Infinity; //ì‹œì‘ì„ ì œì™¸í•œ ë‚˜ë¨¸ì§€ ê±°ë¦¬ ë¬´í•œëŒ€ ì§€ì •ã„´
-                previous[flag] = null;           //null
-            }
+            float resultDistance = resultscostList[i]; // resultsList[i]ÀÇ ±æÀÌ¸¦ °è»êÇÒ °Í
 
-            unvisited.Add(flag); //ë°©ë¬¸ì•ˆí•œ ë¦¬ìŠ¤íŠ¸ì— ë„£ìŒ 
+            string t = "";
+            for (int j = 0; j < resultsList[i].Length; j++)
+            {
+                t += resultsList[i][j] + " - ";
+
+            }
+            Debug.Log("°æ·Î" + t);
+
+            Debug.Log($"ºñ¿ë : {resultDistance} ({distance})");
+
+            if (distance > resultDistance)
+            {
+                distance = resultDistance;
+                shortest = i;
+            }
+        }
+        if (shortest < 0)
+        {
+            Debug.Log("±æÀ» ¸ø Ã£À½!");
+            return new List<Flag>();
         }
 
-        while (unvisited.Count > 0)
+        foreach(Flag flag in resultsList[shortest].ToList())
         {
-            Flag currentFlag = null;
-            float shortestDistance = Mathf.Infinity;
+            flag.SetColor(Flag.EState.Selected);
+        }
 
-            foreach (Flag flag in unvisited)
-            {
-                if (distance[flag] < shortestDistance)
-                {
-                    shortestDistance = distance[flag];
-                    currentFlag = flag;
-                }
-            }
+        return resultsList[shortest].ToList(); //ÃÖ¼Òºñ¿ë °æ·Î ¹èÃâ
+    }
 
-            if (currentFlag == _goalFlag)
-            {
-                break;
-            }
-
-            unvisited.Remove(currentFlag); //ì´ë•Œ ëº´ê³   //ì‹œì‘ì„ëº´ê³ 
+    // ¹éÆ®·¡Å· »ç¿ë
+    static private void FlagSearch(Flag _current, Flag _goal)
+    {
+        if (_current == _goal) //¸ñÇ¥¸¸³ª¸é
+        {
+            resultsList.Add(passedProcessedList.ToArray()); //°æ·Î ³Ö±â (°æ·Î ¸ğÀ½Áı) //°æ·Î³Ö±â
+            resultscostList.Add(passedcostList.Sum()); //cost ³Ö±â      (ºñ¿ë ¸ğÀ½Áı)
             
-            //ëº¸ê±¸ê°€ì§€ê³ 
-            foreach (Flag neighbor in currentFlag.GetNextFlags()) //ë°©ë¬¸í•œ í”Œë˜ê·¸ì˜ ë‹¤ìŒ í”Œë˜ê·¸ ì „ë¶€ê²€ì‚¬
-            {                                                                         //
-                float altDistance = distance[currentFlag] + Vector3.Distance(currentFlag.transform.position, neighbor.transform.position);
-                // ë‹¤ìŒí”Œë˜ê·¸ë“¤ê³¼ ë°©ë¬¸í”Œë˜ê·¸ì˜ ê±°ë¦¬ë¥¼ êµ¬í•˜ì—¬ altDistanceì— ë„£ê³ 
-                if (altDistance < distance[neighbor])  
-                {
-                    distance[neighbor] = altDistance;  //ë‹¤ìŒê°ˆê³³ë“¤ì˜ ê¸¸ì´ë¥¼ ë„£ì–´ì¤Œ (ì§€ê¸ˆê¹Œì§€ì˜¨ê¸¸ì´+ê°ˆê¸¸ì´)
-                    previous[neighbor] = currentFlag; //ì „ì˜ í”Œë˜ê·¸
-
-
-                }
-            }
+            
+            return;
         }
 
-        List<Flag> path = new List<Flag>();
-        Flag current = _goalFlag;
-
-        while (current != null)
+        //
+        foreach (Flag _canGoList in _current.GetNextFlags())
         {
-            path.Insert(0, current); // 0ë²ˆì§¸ ìš”ì†Œì— ì‚½ì… ì—­ìˆœìœ¼ë¡œ ë±‰ìŒ
-            current = previous[current];
+            if (passedProcessedList.Contains(_canGoList)) continue;
+
+            passedProcessedList.Add(_canGoList);
+            passedcostList.Add(Vector3.Distance(_current.gameObject.transform.position, _canGoList.gameObject.transform.position));
+
+            FlagSearch(_canGoList, _goal);
+
+            passedProcessedList.Remove(_canGoList);
+            passedcostList.Remove(Vector3.Distance(_current.gameObject.transform.position, _canGoList.gameObject.transform.position));
         }
 
-        for (int i = 0; i < path.Count; i++)
+        /*
+        Flag[] canGoList = _current.GetNextFlags();
+
+        for (int i = 0; i < canGoList.Length; ++i)
         {
-            path[i].SetColor(Flag.EState.Selected);
-            if (i > 0) path[i].gameObject.SetActive(true);
+            if (passedProcessedList.Contains(canGoList[i])) continue;
+
+            passedProcessedList.Add(canGoList[i]);
+
+            //passedcostList.Add(_current.getDis(canGoList[i]));
+            passedcostList.Add(Vector3.Distance(_current.gameObject.transform.position, canGoList[i].gameObject.transform.position));
+
+
+            FlagSearch(canGoList[i], _goal);
+
+            passedProcessedList.Remove(canGoList[i]);
+            passedcostList.Remove(Vector3.Distance(_current.gameObject.transform.position, canGoList[i].gameObject.transform.position));
+            //passedcostList.Remove(_current.getDis(canGoList[i]));
+        
+        }
+        */
+
+
+        //
+
+
+        Flag[] canGoList = _current.GetNextFlags();
+
+        for (int i = 0; i < canGoList.Length; ++i)
+        {
+            if (passedProcessedList.Contains(canGoList[i])) continue;
+
+            passedProcessedList.Add(canGoList[i]);
+
+            //passedcostList.Add(_current.getDis(canGoList[i]));
+            passedcostList.Add(Vector3.Distance(_current.gameObject.transform.position, canGoList[i].gameObject.transform.position));
+
+
+            FlagSearch(canGoList[i], _goal);
+
+            passedProcessedList.Remove(canGoList[i]);
+            passedcostList.Remove(Vector3.Distance(_current.gameObject.transform.position, canGoList[i].gameObject.transform.position));
+            //passedcostList.Remove(_current.getDis(canGoList[i]));
         }
 
-        return path;
+
+
     }
 
-
-    /*
-    // A* algorithm
-    public static List<Flag> PathFinding(Flag _entryFlag, Flag _goalFlag)
-    {
-        Dictionary<Flag, Flag> cameFrom = new Dictionary<Flag, Flag>();
-        Dictionary<Flag, float> costSoFar = new Dictionary<Flag, float>();
-        List<Flag> frontier = new List<Flag>();
-
-        frontier.Add(_entryFlag);
-        cameFrom[_entryFlag] = null;
-        costSoFar[_entryFlag] = 0f;
-
-        while (frontier.Count > 0)
-        {
-            Flag current = frontier[0];
-            frontier.RemoveAt(0);
-
-            if (current == _goalFlag)
-                break;
-
-            Flag[] neighbors = current.GetnextFlag();
-            foreach (Flag next in neighbors)
-            {
-                float newCost = costSoFar[current] + Vector3.Distance(current.transform.position, next.transform.position);
-                if (!costSoFar.ContainsKey(next) || newCost < costSoFar[next])
-                {
-                    costSoFar[next] = newCost;
-                    float priority = newCost + Vector3.Distance(next.transform.position, _goalFlag.transform.position);
-                    int index = frontier.FindIndex(x => priority < costSoFar[x] + Vector3.Distance(x.transform.position, _goalFlag.transform.position));
-                    if (index >= 0)
-                    {
-                        frontier.Insert(index, next);
-                    }
-                    else
-                    {
-                        frontier.Add(next);
-                    }
-                    cameFrom[next] = current;
-                }
-            }
-        }
-
-        if (!cameFrom.ContainsKey(_goalFlag))
-        {
-            Debug.LogError("Path not found");
-            return null;
-        }
-
-        List<Flag> path = new List<Flag>();
-        Flag currentFlag = _goalFlag;
-        while (currentFlag != _entryFlag)
-        {
-            path.Insert(0, currentFlag);
-            currentFlag.SetColor(Flag.EState.Selected);
-            currentFlag = cameFrom[currentFlag];
-        }
-        path.Insert(0, _entryFlag);
-        _entryFlag.SetColor(Flag.EState.Selected);
-
-        return path;
-    }
-    */
 }

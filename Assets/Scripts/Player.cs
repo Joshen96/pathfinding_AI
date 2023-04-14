@@ -2,27 +2,36 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class Player : MonoBehaviour
 {
-    //[SerializeField]
-    //private Transform destSampleTr = null;
+
+    public Camera getCamera;
+    private RaycastHit hit;
+    [SerializeField]
+    private Transform destSampleTr = null;
 
     [Header("--Flag--")]
     [SerializeField]
     private Flag entryFlag = null;//시작플레그만알기
     [SerializeField]
     private Flag goalFlag = null;
+    [SerializeField]
+    private Flag debug = null;
 
 
     private NavMeshAgent agent = null;
     
     private List<Flag> flagList = null;
+
+    public Flag LastvisitFlag = null;
     [SerializeField]
-    
-   
+    public Flag goObj = null;
+
+
     private bool isMoving = false;
     //스타트 -> 
 
@@ -45,9 +54,12 @@ public class Player : MonoBehaviour
         }
         SetNextFlag();
 
-
         
+
     }
+    
+    
+
 
     private IEnumerator MovingCoroutine(Flag _nextFlag) //코루틴 병렬작업
     {
@@ -66,9 +78,18 @@ public class Player : MonoBehaviour
     }
     private void Update()
     {
+        //if (Input.GetKeyDown(KeyCode.Space))
+        
+        
+           
+            SetNextFlag();
+        
+
         //Debug.Log(agent.remainingDistance);
         //Debug.Log(Input.mousePosition);     //마우스 포지션확인 
-        /*//잠시주석
+
+
+        /*//마우스이동 한곳으로 오브젝트이동하고 그위치로 가는 기능
         if(Input.GetMouseButtonDown(0))
         {
             Vector3 pickPos = Vector3.zero;
@@ -82,6 +103,11 @@ public class Player : MonoBehaviour
         }
         //agent.SetDestination(destSampleTr.position);
         */
+
+
+
+
+
         /*
         Debug.Log("시작");
 
@@ -98,11 +124,23 @@ public class Player : MonoBehaviour
 
 
     }
-
-    private void SetNextFlag()
+    public void resetcolor()
+    {
+        foreach (Flag flag in GameObject.FindObjectsOfType<Flag>()) //Flag 달린 오브젝트 전부
+        {
+            flag.SetColor(Flag.EState.Normal);
+        }
+    }
+    
+    public void SetNextFlag()
     {
         if (isMoving) return;
-        if (flagList.Count == 0) return;
+        if(flagList.Count == 1)
+        {
+            LastvisitFlag = flagList[0];
+            
+        }
+        if (flagList.Count == 0)return;
 
         Flag nextFlag = flagList[0];
         //StartCoroutine(MovingCoroutine(nextFlag));
@@ -128,5 +166,17 @@ public class Player : MonoBehaviour
         //선택된게 없으면 처리
         _pickpos= Vector3.zero;
         return false;
+    }
+    public Flag GetLastFLag()
+    {
+        return LastvisitFlag;
+    }
+    public void SetFlag(Flag obj)
+    {
+        goObj = obj;
+    }
+    public void SetPathList(List<Flag> _flagList)
+    {
+        flagList = _flagList;
     }
 }

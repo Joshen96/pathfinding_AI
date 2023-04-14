@@ -35,6 +35,7 @@ public class Flag : MonoBehaviour
     {
         return nextFlagList.ToArray();
     }
+   
     public string GetName()
     {
         return gameObject.name;
